@@ -124,23 +124,23 @@ agent = create_sql_agent(
     agent_type="openai-tools",
 )
 
-#For testing
-print(agent.invoke({"input": "Is prefix U9M good to admit?"}))
+# #For testing
+# print(agent.invoke({"input": "Is prefix U9M good to admit?"}))
 
 
-# @app.route('/chat', methods=['POST'])
-# def invoke_agent():
-#     # Get the query from the request JSON body
-#     data = request.json
-#     query = data.get('query', '')
-#     if not query:
-#         return jsonify({'error': 'No query provided'}), 400
+@app.route('/chat', methods=['POST'])
+def invoke_agent():
+    # Get the query from the request JSON body
+    data = request.json
+    query = data.get('query', '')
+    if not query:
+        return jsonify({'error': 'No query provided'}), 400
 
-#     # Invoke the agent
-#     result = agent.invoke(query)
+    # Invoke the agent
+    result = agent.invoke(query)
     
-#     # Return the result
-#     return jsonify({'response': result})
+    # Return the result
+    return jsonify({'response': result})
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
