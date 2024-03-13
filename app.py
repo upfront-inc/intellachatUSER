@@ -30,6 +30,10 @@ llm = ChatOpenAI(model="gpt-4-0125-preview", temperature=0)
 
 # Create the SQL agent with LangChain
 examples = [
+            {
+    "input": "Is prefix QMF good to admit?",
+       "query": "SELECT CASE WHEN AVG(admission_percentage) > 59 THEN 'YES' ELSE 'NO' END AS is_good_to_admit FROM financials_patient WHERE LOWER(LEFT(\"policy_id\", 3)) = 'QMF';"
+    },
     {
             "input": "How many Prefixes are there",
              "query": "WITH Prefixes AS ( SELECT LEFT(\"Claim Primary Member ID\", 3) AS prefix FROM \"financials_patient\") SELECT prefix, COUNT(*) AS count FROM Prefixes GROUP BY prefix ORDER BY count DESC;"
@@ -39,7 +43,10 @@ examples = [
         "input": "who are the payers for prefix 4TQ?",
         "query": "SELECT DISTINCT \"insurance\" FROM \"financials_patient\" WHERE LEFT(policy_id, 3) = '4TQ';"
     },
-
+    {
+        "input": "what's the name of the insurance for prefix 4TQ?",
+        "query": "SELECT DISTINCT \"insurance\" FROM \"financials_patient\" WHERE LEFT(policy_id, 3) = '4TQ';"
+    },
     {
 
     "input": "is prefix VYA in-network?",
@@ -60,7 +67,7 @@ examples = [
     {
     "input": " how many days on average is residential for prefix QMF?",
     "query": "WITH DetoxDurations AS ( SELECT LEFT(\"policy_id\", 3) AS prefix, MAX(\"date\") - MIN(\"date\") + 1 AS detox_duration FROM \"financials_patient\" WHERE LEFT(\"policy_id\", 3) = 'QMF' AND \"charge_code\" = 'H0018' GROUP BY \"policy_id\" ) SELECT AVG(detox_duration) AS average_detox_duration FROM DetoxDurations;"
-    }
+    },
 ]
 
 example_selector = SemanticSimilarityExampleSelector.from_examples(
@@ -85,13 +92,13 @@ system_prefix = f"""You are an agent designed to interact with a SQL database wi
 Given an input question, create a syntactically correct  Postgres query to run, then look at the results of the query and return the answer.
 Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most Top 10 results.
 You can order the results by a relevant column to return the most interesting examples in the database.
+If there is a specified prefix not found in the database, immediately respond that the prefix is not found in the database.
 Never query for all the columns from a specific table, only ask for the relevant columns given the question.
 Never reveal any financial information (what a prefix got paid, the amount the prefix was charged, the balance etc.)
 You have access to tools for interacting with the database.
 Only use the given tools. Only use the information returned by the tools to construct your final answer.
 You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
-DO NOT show any Financial Information ($36,000, 301.70, $12.00 etc.) to the user. If they do ask, be broad with your answer by saying if it's good or bad without exposing financial information. good would considered if paid was averaged at least $900 or payout ratio was atleast 0.20 for in-network or 0.4 for out-of-network.
-
+DO NOT show any Financial Information ($36,000, 301.70, $12.00 etc.) to the user. If they do ask, be broad with your answer by saying if it's good or bad without exposing financial information.
 DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 
 If the question does not seem related to the database, just return "I don't know" as the answer.
