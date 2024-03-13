@@ -32,8 +32,9 @@ llm = ChatOpenAI(model="gpt-4-0125-preview", temperature=0)
 examples = [
             {
     "input": "Is prefix QMF good to admit?",
-       "query": "SELECT CASE WHEN AVG(admission_percentage) > 59 THEN 'YES' ELSE 'NO' END AS is_good_to_admit FROM financials_patient WHERE LOWER(LEFT(\"policy_id\", 3)) = 'QMF';"
+    "query": "SELECT CASE WHEN COUNT(policy_id) = 0 THEN 'I dont know' ELSE CASE WHEN AVG(admission_percentage) > 59 THEN 'YES' ELSE 'NO' END END AS is_good_to_admit FROM financials_patient WHERE LOWER(LEFT(\"policy_id\", 3)) = 'qmf';"
     },
+
     {
             "input": "How many Prefixes are there",
              "query": "WITH Prefixes AS ( SELECT LEFT(\"Claim Primary Member ID\", 3) AS prefix FROM \"financials_patient\") SELECT prefix, COUNT(*) AS count FROM Prefixes GROUP BY prefix ORDER BY count DESC;"
@@ -88,11 +89,11 @@ from langchain_core.prompts import (
 )
 
 
-system_prefix = f"""You are an agent designed to interact with a SQL database with vague answers.
+system_prefix = f"""You are an agent designed to interact with a SQL database.
 Given an input question, create a syntactically correct  Postgres query to run, then look at the results of the query and return the answer.
 Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most Top 10 results.
 You can order the results by a relevant column to return the most interesting examples in the database.
-If there is a specified prefix not found in the database, immediately respond that the prefix is not found in the database.
+If there is a specified prefix not found in the database, immediately respond that the prefix is not found in the database. For example if user
 Never query for all the columns from a specific table, only ask for the relevant columns given the question.
 Never reveal any financial information (what a prefix got paid, the amount the prefix was charged, the balance etc.)
 You have access to tools for interacting with the database.
